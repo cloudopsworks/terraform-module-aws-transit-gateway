@@ -8,8 +8,8 @@ module "transit_gateway" {
   providers = {
     aws = aws.default
   }
-  source                                = "cloudopsworks/transit-gateway/aws"
-  version                               = "~> 1.0"
+  source = "git::github.com/cloudopsworks/terraform-aws-transit-gateway.git?ref=master"
+  #version                               = "~> 1.0"
   name                                  = "tgw-${local.system_name}"
   description                           = "Transit Gateway for Hub ${var.spoke_def}"
   create_tgw                            = var.is_hub
