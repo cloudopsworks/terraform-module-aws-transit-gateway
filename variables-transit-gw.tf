@@ -6,8 +6,9 @@
 
 # VPC attachments configuration
 variable "vpc_attachments" {
-  type    = list(any)
-  default = []
+  description = "Maps of maps of VPC details to attach to TGW. Type 'any' to disable type validation by Terraform."
+  type        = any
+  default     = {}
 }
 
 variable "ram" {
