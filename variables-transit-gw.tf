@@ -3,6 +3,8 @@
 #            On GitHub: https://github.com/cloudopsworks
 #            Distributed Under Apache v2.0 License
 #
+
+# VPC attachments configuration
 variable "vpc_attachments" {
   type    = list(any)
   default = []
@@ -19,14 +21,17 @@ variable "ram" {
   }
 }
 
+variable "enable_auto_accept" {
+  type    = bool
+  default = true
+}
+
 variable "shared" {
   type = object({
-    enable_auto_accept = optional(bool, false)
     ram_share_id       = string
     tgw_route_table_id = string
   })
   default = {
-    enable_auto_accept = false
     ram_share_id       = null
     tgw_route_table_id = null
   }

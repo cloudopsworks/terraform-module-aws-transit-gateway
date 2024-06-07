@@ -93,15 +93,16 @@ Available targets:
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_enable_auto_accept"></a> [enable\_auto\_accept](#input\_enable\_auto\_accept) | n/a | `bool` | `true` | no |
 | <a name="input_extra_tags"></a> [extra\_tags](#input\_extra\_tags) | n/a | `map(string)` | `{}` | no |
 | <a name="input_flow_logs_type"></a> [flow\_logs\_type](#input\_flow\_logs\_type) | n/a | `string` | `"REJECT"` | no |
 | <a name="input_flowlogs_role_arn"></a> [flowlogs\_role\_arn](#input\_flowlogs\_role\_arn) | n/a | `string` | n/a | yes |
-| <a name="input_is_hub"></a> [is\_hub](#input\_is\_hub) | # (c) 2024 - Cloud Ops Works LLC - https://cloudops.works/ On GitHub: https://github.com/cloudopsworks Distributed Under Apache v2.0 License | `bool` | `false` | no |
+| <a name="input_is_hub"></a> [is\_hub](#input\_is\_hub) | Establish this is a HUB or spoke configuration | `bool` | `false` | no |
 | <a name="input_org"></a> [org](#input\_org) | n/a | <pre>object({<br>    organization_name = string<br>    organization_unit = string<br>    environment_type  = string<br>    environment_name  = string<br>  })</pre> | n/a | yes |
 | <a name="input_ram"></a> [ram](#input\_ram) | n/a | <pre>object({<br>    allow_external_principals = optional(bool, false)<br>    principals                = optional(list(string), [])<br>  })</pre> | <pre>{<br>  "allow_external_principals": false,<br>  "principals": []<br>}</pre> | no |
-| <a name="input_shared"></a> [shared](#input\_shared) | n/a | <pre>object({<br>    enable_auto_accept = optional(bool, false)<br>    ram_share_id       = string<br>    tgw_route_table_id = string<br>  })</pre> | <pre>{<br>  "enable_auto_accept": false,<br>  "ram_share_id": null,<br>  "tgw_route_table_id": null<br>}</pre> | no |
+| <a name="input_shared"></a> [shared](#input\_shared) | n/a | <pre>object({<br>    ram_share_id       = string<br>    tgw_route_table_id = string<br>  })</pre> | <pre>{<br>  "ram_share_id": null,<br>  "tgw_route_table_id": null<br>}</pre> | no |
 | <a name="input_spoke_def"></a> [spoke\_def](#input\_spoke\_def) | n/a | `string` | `"001"` | no |
-| <a name="input_vpc_attachments"></a> [vpc\_attachments](#input\_vpc\_attachments) | # (c) 2024 - Cloud Ops Works LLC - https://cloudops.works/ On GitHub: https://github.com/cloudopsworks Distributed Under Apache v2.0 License | `list(any)` | `[]` | no |
+| <a name="input_vpc_attachments"></a> [vpc\_attachments](#input\_vpc\_attachments) | VPC attachments configuration | `list(any)` | `[]` | no |
 
 ## Outputs
 

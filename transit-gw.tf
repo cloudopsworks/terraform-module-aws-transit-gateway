@@ -17,7 +17,7 @@ module "transit_gateway" {
   vpc_attachments                       = var.vpc_attachments
   ram_allow_external_principals         = var.ram.allow_external_principals
   ram_principals                        = var.ram.principals
-  enable_auto_accept_shared_attachments = var.shared.enable_auto_accept
+  enable_auto_accept_shared_attachments = var.enable_auto_accept
   ram_resource_share_arn                = var.shared.ram_share_id
   transit_gateway_route_table_id        = var.shared.tgw_route_table_id
   tags                                  = local.all_tags
