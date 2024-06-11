@@ -37,3 +37,8 @@ variable "shared" {
     tgw_route_table_id = null
   }
 }
+
+variable "route_all_internet" {
+  type    = bool
+  default = true
+}
