@@ -13,10 +13,12 @@ variable "vpc_attachments" {
 
 variable "ram" {
   type = object({
+    enabled                   = optional(bool, true)
     allow_external_principals = optional(bool, false)
     principals                = optional(list(string), [])
   })
   default = {
+    enabled                   = false
     allow_external_principals = false
     principals                = []
   }
