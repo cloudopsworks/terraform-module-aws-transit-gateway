@@ -5,9 +5,6 @@
 #
 
 module "transit_gateway" {
-  providers = {
-    aws = aws.default
-  }
   source                                = "terraform-aws-modules/transit-gateway/aws"
   version                               = "~> 2.10"
   name                                  = "tgw-${local.system_name}"
@@ -24,7 +21,6 @@ module "transit_gateway" {
 }
 
 resource "aws_ec2_transit_gateway_route" "tgw_route_all_to_internet" {
-  provider                       = aws.default
   count                          = var.route_all_internet && var.is_hub ? 1 : 0
   destination_cidr_block         = "0.0.0.0/0"
   transit_gateway_attachment_id  = module.transit_gateway.ec2_transit_gateway_vpc_attachment_ids[0]
