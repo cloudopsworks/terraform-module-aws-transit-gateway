@@ -5,8 +5,8 @@
 #
 
 module "transit_gateway" {
-  source                                = "terraform-aws-modules/transit-gateway/aws"
-  version                               = "~> 2.10"
+  source                                = "modules/transit-gateway"
+#   version                               = "~> 2.10"
   name                                  = "tgw-${local.system_name}"
   description                           = "Transit Gateway for Hub ${var.spoke_def}"
   create_tgw                            = var.is_hub
