@@ -5,7 +5,7 @@
 #
 
 module "transit_gateway" {
-  source                                = "modules/transit-gateway"
+  source                                = "./modules/transit-gateway"
 #   version                               = "~> 2.10"
   name                                  = "tgw-${local.system_name}"
   description                           = "Transit Gateway for Hub ${var.spoke_def}"
