@@ -128,6 +128,7 @@ resource "aws_ec2_transit_gateway_route" "default" {
 
 
 resource "aws_route" "this" {
+  depends_on = [aws_ram_resource_share_accepter.this]
   for_each = { for x in local.vpc_route_table_destination_cidr : x.rtb_id => {
     cidr   = x.cidr,
     tgw_id = x.tgw_id
