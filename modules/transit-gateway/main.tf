@@ -4,6 +4,11 @@ locals {
     for k, v in var.vpc_attachments : setproduct([{ key = k }], v.tgw_routes) if var.create_tgw && can(v.tgw_routes)
   ]), 2)
 
+  # Listo of maps for route values for default route table
+  vpc_attachments_with_routes_default = chunklist(flatten([
+    for k, v in var.vpc_attachments : setproduct([{ key = k }], v.tgw_routes_default) if can(v.tgw_routes_default)
+  ]), 2)
+
   tgw_default_route_table_tags_merged = merge(
     var.tags,
     { Name = var.name },
@@ -109,6 +114,17 @@ resource "aws_ec2_transit_gateway_route" "this" {
   transit_gateway_route_table_id = var.create_tgw ? aws_ec2_transit_gateway_route_table.this[0].id : var.transit_gateway_route_table_id
   transit_gateway_attachment_id  = tobool(try(local.vpc_attachments_with_routes[count.index][1].blackhole, false)) == false ? aws_ec2_transit_gateway_vpc_attachment.this[local.vpc_attachments_with_routes[count.index][0].key].id : null
 }
+
+resource "aws_ec2_transit_gateway_route" "default" {
+  count = var.create_tgw_routes ? length(local.vpc_attachments_with_routes_default) : 0
+
+  destination_cidr_block = local.vpc_attachments_with_routes_default[count.index][1].destination_cidr_block
+  blackhole              = try(local.vpc_attachments_with_routes_default[count.index][1].blackhole, null)
+
+  transit_gateway_route_table_id = var.create_tgw ? aws_ec2_transit_gateway_route_table.this[0].id : var.transit_gateway_route_table_id
+  transit_gateway_attachment_id  = tobool(try(local.vpc_attachments_with_routes_default[count.index][1].blackhole, false)) == false ? aws_ec2_transit_gateway_vpc_attachment.this[local.vpc_attachments_with_routes_default[count.index][0].key].id : null
+}
+
 
 resource "aws_route" "this" {
   for_each = { for x in local.vpc_route_table_destination_cidr : x.rtb_id => {

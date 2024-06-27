@@ -5,8 +5,9 @@
 #
 
 module "transit_gateway" {
-  source                                = "terraform-aws-modules/transit-gateway/aws"
-  version                               = "~> 2.10"
+  #   source                                = "terraform-aws-modules/transit-gateway/aws"
+  #   version                               = "~> 2.10"
+  source                                = "./modules/transit-gateway"
   name                                  = "tgw-${local.system_name}"
   description                           = "Transit Gateway for Hub ${var.spoke_def}"
   create_tgw                            = var.is_hub
@@ -20,9 +21,3 @@ module "transit_gateway" {
   tags                                  = local.all_tags
 }
 
-# resource "aws_ec2_transit_gateway_route" "tgw_route_all_to_internet" {
-#   count                          = var.route_all_internet && var.is_hub ? 1 : 0
-#   destination_cidr_block         = "0.0.0.0/0"
-#   transit_gateway_attachment_id  = module.transit_gateway.ec2_transit_gateway_vpc_attachment_ids[0]
-#   transit_gateway_route_table_id = module.transit_gateway.ec2_transit_gateway_association_default_route_table_id
-# }
