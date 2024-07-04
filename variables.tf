@@ -28,16 +28,3 @@ variable "extra_tags" {
   type    = map(string)
   default = {}
 }
-
-variable "flow_logs_type" {
-  type    = string
-  default = "REJECT"
-  validation {
-    condition     = contains(["ACCEPT", "REJECT", "ALL"], var.flow_logs_type)
-    error_message = "Invalid value for flow_logs_type. Must be one of ACCEPT, REJECT, or ALL"
-  }
-}
-
-variable "flowlogs_role_arn" {
-  type = string
-}
