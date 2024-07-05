@@ -43,9 +43,9 @@ resource "aws_ec2_transit_gateway" "this" {
 
 # tagging of the default route table
 resource "aws_ec2_tag" "this" {
-  for_each = { for k, v in local.tgw_route_tags : k => v if var.enable_default_route_table_association }
+  for_each = { for k, v in local.tgw_route_tags : k => v if var.enable_default_route_table_association || var.enable_default_route_table_propagation }
 
-  resource_id = aws_ec2_transit_gateway.this[0].association_default_route_table_id
+  resource_id = coalesce(aws_ec2_transit_gateway.this[0].association_default_route_table_id, aws_ec2_transit_gateway.this[0].propagation_default_route_table_id)
   key         = each.key
   value       = each.value
 }
