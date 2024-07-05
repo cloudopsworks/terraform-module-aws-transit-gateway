@@ -53,9 +53,9 @@ output "ram_resource_share_id" {
   value       = try(aws_ram_resource_share.this[0].id, "")
 }
 
-output "ram_principal_association_id" {
+output "ram_principal_association_ids" {
   description = "The Amazon Resource Name (ARN) of the Resource Share and the principal, separated by a comma"
-  value       = try(aws_ram_principal_association.this[0].id, "")
+  value       = try(aws_ram_principal_association.this[*].id, "")
 }
 
 ################################################################################
