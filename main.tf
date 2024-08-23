@@ -5,7 +5,7 @@
 #
 locals {
   tgw_name       = var.name == "" ? format("tgw-%s", local.system_name) : format("tgw-%s-%s", var.name, local.system_name)
-  tgw_route_name = var.name == "" ? format("tgw-rtbl-%s", local.system_name) : format("tgw-rtbl-%s-%s", var.name, local.system_name)
+  tgw_route_name = var.name == "" ? format("tgw-%s-rtbl", local.system_name) : format("tgw-%s-%s-rtbl", var.name, local.system_name)
 
   tgw_route_tags = merge({
     Name = local.tgw_route_name
