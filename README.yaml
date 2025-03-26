@@ -8,10 +8,21 @@ copyrights:
     url: "https://cloudops.works"
     year: "2024"
 
-github_repo: cloudopsworks/terraform-module-aws-vpc-setup
+github_repo: cloudopsworks/terraform-module-aws-transit-gateway
 
 description: |-
-  VPC Module for setting up transit gateway with ResourceAccessMananger support.
+  This Terraform module sets up a Transit Gateway in AWS with support for Resource Access Manager (RAM). 
+  It simplifies the process of creating and managing a Transit Gateway, which allows you to connect multiple 
+  VPCs and on-premises networks through a central hub. The module includes the following features:
+
+  - **Transit Gateway Creation**: Automatically creates a Transit Gateway with customizable options.
+  - **VPC Attachments**: Supports attaching multiple VPCs to the Transit Gateway.
+  - **Route Tables**: Manages route tables for the Transit Gateway, allowing you to control traffic flow between VPCs.
+  - **Resource Access Manager (RAM) Support**: Enables sharing of the Transit Gateway with other AWS accounts using RAM.
+  - **Tagging**: Supports tagging of all resources for easy identification and management.
+  - **Security**: Configures security settings to ensure secure communication between VPCs.
+
+  This module is designed to be easy to use and highly customizable, making it suitable for a wide range of use cases.
 
 # Introduction to the project
 #introduction: |-
