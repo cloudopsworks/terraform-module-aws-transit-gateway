@@ -17,7 +17,6 @@ resource "aws_flow_log" "tgw_flow_logs" {
   max_aggregation_interval = 60
   traffic_type             = var.flow_logs_type
   transit_gateway_id       = aws_ec2_transit_gateway.this[0].id
-
   tags = merge(
     local.all_tags,
     {
@@ -27,10 +26,28 @@ resource "aws_flow_log" "tgw_flow_logs" {
 }
 
 resource "aws_cloudwatch_log_group" "tgw_log_group" {
-  count = var.is_hub ? 1 : 0
-  name  = "network/${local.flowlogs_prefix}/${var.spoke_def}/tgw-${local.system_name}"
+  count             = var.is_hub ? 1 : 0
+  name              = "network/${local.flowlogs_prefix}/${var.spoke_def}/tgw-${local.system_name}"
+  log_group_class   = var.log_group_class
+  retention_in_days = var.logs_retention
+  skip_destroy      = var.logs_skip_destroy
+  tags = merge(
+    local.all_tags,
+    {
+      Name = "flowlogs-tgw-${local.system_name}"
+    }
+  )
 }
 
 resource "aws_cloudwatch_log_group" "tgw_att_log_group" {
-  name = "network/${local.flowlogs_prefix}/${var.spoke_def}/tgw-att-${local.system_name}"
+  name              = "network/${local.flowlogs_prefix}/${var.spoke_def}/tgw-att-${local.system_name}"
+  log_group_class   = var.log_group_class
+  retention_in_days = var.logs_retention
+  skip_destroy      = var.logs_skip_destroy
+  tags = merge(
+    local.all_tags,
+    {
+      Name = "flowlogs-tgw-${local.system_name}"
+    }
+  )
 }
