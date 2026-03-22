@@ -50,6 +50,9 @@
 | <a name="input_flow_logs_type"></a> [flow\_logs\_type](#input\_flow\_logs\_type) | n/a | `string` | `"REJECT"` | no |
 | <a name="input_flowlogs_role_arn"></a> [flowlogs\_role\_arn](#input\_flowlogs\_role\_arn) | n/a | `string` | n/a | yes |
 | <a name="input_is_hub"></a> [is\_hub](#input\_is\_hub) | Establish this is a HUB or spoke configuration | `bool` | `false` | no |
+| <a name="input_log_group_class"></a> [log\_group\_class](#input\_log\_group\_class) | (optional) The class of the log group. Defaults to STANDARD. | `string` | `"STANDARD"` | no |
+| <a name="input_logs_retention"></a> [logs\_retention](#input\_logs\_retention) | (optional) The number of days to retain logs in the log group. Defaults to 30 days. | `number` | `30` | no |
+| <a name="input_logs_skip_destroy"></a> [logs\_skip\_destroy](#input\_logs\_skip\_destroy) | (optional) Whether to skip destroying the log group. Defaults to false. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to be used on all the resources as identifier | `string` | `""` | no |
 | <a name="input_org"></a> [org](#input\_org) | n/a | <pre>object({<br/>    organization_name = string<br/>    organization_unit = string<br/>    environment_type  = string<br/>    environment_name  = string<br/>  })</pre> | n/a | yes |
 | <a name="input_ram_allow_external_principals"></a> [ram\_allow\_external\_principals](#input\_ram\_allow\_external\_principals) | Indicates whether principals outside your organization can be associated with a resource share. | `bool` | `false` | no |
