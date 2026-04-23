@@ -1,5 +1,5 @@
 ##
-# (c) 2021-2025
+# (c) 2021-2026
 #     Cloud Ops Works LLC - https://cloudops.works/
 #     Find us on:
 #       GitHub: https://github.com/cloudopsworks
@@ -66,17 +66,21 @@ output "ram_principal_association_ids" {
 ################################################################################
 
 output "cloudwatch_log_group_arn" {
-  value = try(aws_cloudwatch_log_group.tgw_log_group[0].arn, "")
+  description = "ARN of the CloudWatch Log Group that stores Transit Gateway flow logs"
+  value       = try(aws_cloudwatch_log_group.tgw_log_group[0].arn, "")
 }
 
 output "cloudwatch_log_group_name" {
-  value = try(aws_cloudwatch_log_group.tgw_log_group[0].name, "")
+  description = "Name of the CloudWatch Log Group that stores Transit Gateway flow logs"
+  value       = try(aws_cloudwatch_log_group.tgw_log_group[0].name, "")
 }
 
 output "cloudwatch_log_group_att_arn" {
-  value = aws_cloudwatch_log_group.tgw_att_log_group.arn
+  description = "ARN of the CloudWatch Log Group reserved for Transit Gateway attachment flow logs"
+  value       = aws_cloudwatch_log_group.tgw_att_log_group.arn
 }
 
 output "cloudwatch_log_group_att_name" {
-  value = aws_cloudwatch_log_group.tgw_att_log_group.name
+  description = "Name of the CloudWatch Log Group reserved for Transit Gateway attachment flow logs"
+  value       = aws_cloudwatch_log_group.tgw_att_log_group.name
 }
