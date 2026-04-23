@@ -1,5 +1,5 @@
 ##
-# (c) 2021-2025
+# (c) 2021-2026
 #     Cloud Ops Works LLC - https://cloudops.works/
 #     Find us on:
 #       GitHub: https://github.com/cloudopsworks
@@ -55,7 +55,7 @@ resource "aws_ec2_tag" "this" {
 
 # Custom Route Tables for Transit Gateway
 resource "aws_ec2_transit_gateway_route_table" "this" {
-  count = var.create_tgw_routes ? 1 : 0
+  count = var.is_hub && var.create_tgw_routes ? 1 : 0
 
   transit_gateway_id = aws_ec2_transit_gateway.this[0].id
 
@@ -69,7 +69,7 @@ resource "aws_ec2_transit_gateway_route_table" "this" {
 resource "aws_ram_resource_share" "this" {
   count = var.is_hub && var.share_tgw ? 1 : 0
 
-  name                      = local.tgw_name
+  name                      = var.ram_name == "" ? local.tgw_name : var.ram_name
   allow_external_principals = var.ram_allow_external_principals
 
   tags = merge(

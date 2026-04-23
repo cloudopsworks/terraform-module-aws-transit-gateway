@@ -8,38 +8,33 @@
   -->
 [![README Header][readme_header_img]][readme_header_link]
 
-[![cloudopsworks][logo]](https://cloudops.works/)
+[![cloudopsworks][logo]](https://cloudopsworks.co/)
 
-# Terraform Transit Gateway Module
+# Terraform AWS Transit Gateway Module
+
+ [![Latest Release](https://img.shields.io/github/release/cloudopsworks/terraform-module-aws-transit-gateway.svg?style=for-the-badge)](https://github.com/cloudopsworks/terraform-module-aws-transit-gateway/releases/latest) [![Last Updated](https://img.shields.io/github/last-commit/cloudopsworks/terraform-module-aws-transit-gateway.svg?style=for-the-badge)](https://github.com/cloudopsworks/terraform-module-aws-transit-gateway/commits)
 
 
-This Terraform module sets up a Transit Gateway in AWS with support for Resource Access Manager (RAM). 
-It simplifies the process of creating and managing a Transit Gateway, which allows you to connect multiple 
-VPCs and on-premises networks through a central hub. The module includes the following features:
+Terraform module for deploying an AWS Transit Gateway in a Cloud Ops Works hub-and-spoke landing zone.
+The module creates the hub Transit Gateway, optional custom route table, RAM sharing resources, and
+CloudWatch Log Groups/flow logs for Transit Gateway traffic observability.
 
-- **Transit Gateway Creation**: Automatically creates a Transit Gateway with customizable options.
-- **VPC Attachments**: Supports attaching multiple VPCs to the Transit Gateway.
-- **Route Tables**: Manages route tables for the Transit Gateway, allowing you to control traffic flow between VPCs.
-- **Resource Access Manager (RAM) Support**: Enables sharing of the Transit Gateway with other AWS accounts using RAM.
-- **Tagging**: Supports tagging of all resources for easy identification and management.
-- **Security**: Configures security settings to ensure secure communication between VPCs.
-
-This module is designed to be easy to use and highly customizable, making it suitable for a wide range of use cases.
+Key capabilities:
+- Hub Transit Gateway creation with configurable ASN, DNS support, VPN ECMP, multicast, and CIDR blocks.
+- Optional custom Transit Gateway route table creation for hub deployments.
+- AWS Resource Access Manager (RAM) sharing for hub accounts and share acceptance for spoke accounts.
+- CloudWatch Log Groups and Transit Gateway flow logs with retention, class, and destroy-policy controls.
+- Cloud Ops Works naming and tagging integration through the standard organization/spoke metadata inputs.
 
 
 ---
 
 This project is part of our comprehensive approach towards DevOps Acceleration. 
 [<img align="right" title="Share via Email" width="24" height="24" src="https://docs.cloudops.works/images/ionicons/ios-mail.svg"/>][share_email]
-[<img align="right" title="Share on Google+" width="24" height="24" src="https://docs.cloudops.works/images/ionicons/logo-googleplus.svg" />][share_googleplus]
 [<img align="right" title="Share on Facebook" width="24" height="24" src="https://docs.cloudops.works/images/ionicons/logo-facebook.svg" />][share_facebook]
 [<img align="right" title="Share on Reddit" width="24" height="24" src="https://docs.cloudops.works/images/ionicons/logo-reddit.svg" />][share_reddit]
 [<img align="right" title="Share on LinkedIn" width="24" height="24" src="https://docs.cloudops.works/images/ionicons/logo-linkedin.svg" />][share_linkedin]
-[<img align="right" title="Share on Twitter" width="24" height="24" src="https://docs.cloudops.works/images/ionicons/logo-twitter.svg" />][share_twitter]
-
-
-[![Terraform Open Source Modules](https://docs.cloudops.works/images/terraform-open-source-modules.svg)][terraform_modules]
-
+[<img align="right" title="Share on X" width="24" height="24" src="https://docs.cloudops.works/images/ionicons/logo-twitter.svg" />][share_twitter]
 
 
 It's 100% Open Source and licensed under the [APACHE2](LICENSE).
@@ -59,16 +54,14 @@ We have [*lots of terraform modules*][terraform_modules] that are Open Source an
 
 ## Introduction
 
-The AWS Transit Gateway Module is designed to simplify the implementation of hub-and-spoke network architectures in AWS. 
-It provides a centralized way to manage network connectivity between VPCs and on-premises networks through a single gateway.
+Use this module to provide centralized AWS network connectivity through a Transit Gateway. In hub mode,
+the module creates and tags the Transit Gateway, creates/associates RAM resources for cross-account use,
+and configures flow logging. In spoke mode, the module can accept a shared RAM resource share while still
+publishing the attachment log group expected by downstream networking modules.
 
-Key features:
-- Automated Transit Gateway deployment with customizable configurations
-- Support for VPC attachments and route table management
-- Built-in Resource Access Manager (RAM) integration for cross-account sharing
-- Comprehensive tagging system integration
-- DNS support and multicast capabilities
-- VPN ECMP support for enhanced routing
+The module is intended to be consumed with the Cloud Ops Works Terragrunt scaffolding workflow. Deployment
+teams edit the generated `inputs.yaml`; the generated `terragrunt.hcl` wires those values together with
+environment, region, spoke, VPC dependency, and tag metadata from the Terragrunt hierarchy.
 
 ## Usage
 
@@ -77,110 +70,201 @@ Key features:
 Instead pin to the release tag (e.g. `?ref=vX.Y.Z`) of one of our [latest releases](https://github.com/cloudopsworks/terraform-module-aws-transit-gateway/releases).
 
 
-To use this module, you need to provide the following configuration:
+Bootstrap a deployment with Terragrunt scaffold:
+
+```sh
+# 1. Create and enter the target deployment directory
+mkdir -p prod/us-east-1/network/transit-gateway
+cd prod/us-east-1/network/transit-gateway
+
+# 2. Scaffold the module (do NOT use --working-dir)
+terragrunt scaffold github.com/cloudopsworks/terraform-module-aws-transit-gateway
+
+# 3. Edit inputs.yaml with deployment-specific values
+#    (all keys and comments are pre-populated from .boilerplate/inputs.yaml)
+vi inputs.yaml
+
+# 4. Apply
+terragrunt apply
+```
+
+Generated `inputs.yaml`:
+
+```yaml
+# Module configuration
+
+name: "" # (Optional) Short name component to include in Transit Gateway resource names. Default: "" (uses the environment-derived system name only).
+description: null # (Optional) Description for the EC2 Transit Gateway. Default: null (uses the generated Transit Gateway name).
+amazon_side_asn: null # (Optional) Private ASN for the Amazon side of the Transit Gateway BGP session. Default: null (AWS default ASN). Valid range: 64512-65534 or 4200000000-4294967294.
+
+enable_default_route_table_association: true # (Optional) Automatically associate attachments with the default association route table. Default: true.
+enable_default_route_table_propagation: true # (Optional) Automatically propagate attachment routes to the default propagation route table. Default: true.
+enable_auto_accept_shared_attachments: false # (Optional) Automatically accept cross-account attachment requests. Default: false.
+enable_vpn_ecmp_support: true # (Optional) Enable VPN Equal Cost Multipath routing support. Default: true.
+enable_multicast_support: false # (Optional) Enable multicast support on the Transit Gateway. Default: false.
+enable_dns_support: true # (Optional) Enable DNS support on the Transit Gateway. Default: true.
+
+transit_gateway_cidr_blocks: [] # (Optional) IPv4 or IPv6 CIDR blocks to associate with the Transit Gateway. Default: []. IPv4 blocks must be /24 or larger; IPv6 blocks must be /64 or larger.
+timeouts: # (Optional) Operation timeout overrides for the Transit Gateway. Default: {}.
+  create: null # (Optional) Create timeout such as "10m" or "1h". Default: null (provider default).
+  update: null # (Optional) Update timeout such as "10m" or "1h". Default: null (provider default).
+  delete: null # (Optional) Delete timeout such as "10m" or "1h". Default: null (provider default).
+create_tgw_routes: true # (Optional) Create a custom Transit Gateway route table in hub deployments. Default: true.
+
+share_tgw: true # (Optional) Share the Transit Gateway through AWS Resource Access Manager (RAM). Default: true.
+ram_name: "" # (Optional) Name for the RAM resource share. Default: "" (uses the generated Transit Gateway name).
+ram_allow_external_principals: false # (Optional) Allow principals outside the AWS Organization to be associated with the RAM resource share. Default: false.
+ram_principals: [] # (Optional) Principals to share the Transit Gateway with. Default: []. Valid values include AWS account IDs, AWS Organization ARNs, or AWS Organizational Unit ARNs.
+ram_resource_share_arn: "" # (Optional) RAM resource share ARN to accept when this module is deployed as a spoke. Default: "".
+
+flow_logs_type: "REJECT" # (Optional) Traffic type captured by Transit Gateway flow logs. Default: "REJECT". Valid values: "ACCEPT", "REJECT", "ALL".
+flowlogs_role_arn: "" # (Required when vpc_enabled is false or no VPC dependency is available) IAM role ARN that allows VPC Flow Logs to publish Transit Gateway logs to CloudWatch Logs.
+logs_retention: 30 # (Optional) Number of days to retain CloudWatch Logs events. Default: 30. Use 0 to never expire events; otherwise use an AWS-supported retention value.
+log_group_class: "STANDARD" # (Optional) CloudWatch Logs log group class. Default: "STANDARD". Valid values: "STANDARD", "INFREQUENT_ACCESS", "DELIVERY".
+logs_skip_destroy: false # (Optional) Preserve CloudWatch Log Groups when Terraform destroys this module. Default: false.
+```
+
+Generated `terragrunt.hcl` shape:
 
 ```hcl
-module "transit_gateway" {
-  source = "cloudopsworks/terraform-module-aws-transit-gateway"
+locals {
+  local_vars  = yamldecode(file("./inputs.yaml"))
+  spoke_vars  = yamldecode(file(find_in_parent_folders("spoke-inputs.yaml")))
+  region_vars = yamldecode(file(find_in_parent_folders("region-inputs.yaml")))
+  env_vars    = yamldecode(file(find_in_parent_folders("env-inputs.yaml")))
+  global_vars = yamldecode(file(find_in_parent_folders("global-inputs.yaml")))
 
-  org = {
-    organization_name = "MyOrg"
-    organization_unit = "MyUnit"
-    environment_name = "prod"
-    environment_type = "production"
+  local_tags  = jsondecode(file("./local-tags.json"))
+  spoke_tags  = jsondecode(file(find_in_parent_folders("spoke-tags.json")))
+  region_tags = jsondecode(file(find_in_parent_folders("region-tags.json")))
+  env_tags    = jsondecode(file(find_in_parent_folders("env-tags.json")))
+  global_tags = jsondecode(file(find_in_parent_folders("global-tags.json")))
+
+  tags = merge(
+    local.global_tags,
+    local.env_tags,
+    local.region_tags,
+    local.spoke_tags,
+    local.local_tags
+  )
+}
+
+include "root" {
+  path = find_in_parent_folders("terragrunt.hcl")
+}
+
+terraform {
+  source = "github.com/cloudopsworks/terraform-module-aws-transit-gateway"
+}
+
+dependency "vpc" {
+  config_path = "../vpc"
+  mock_outputs_allowed_terraform_commands = ["validate", "destroy"]
+  mock_outputs = {
+    vpc_id            = "vpc-12345678901234"
+    flowlogs_role_arn = "arn:aws:iam::123456789012:role/flowlogs-role"
   }
+}
 
-  name        = "main-tgw"
-  description = "Main Transit Gateway"
+inputs = {
+  is_hub     = false
+  org        = local.env_vars.org
+  spoke_def  = local.spoke_vars.spoke
+  extra_tags = local.tags
 
-  # Optional configurations
-  amazon_side_asn = "64512"
-  enable_dns_support = true
-  enable_vpn_ecmp_support = true
+  name        = try(local.local_vars.name, "")
+  description = try(local.local_vars.description, null)
 
-  # RAM sharing configuration
-  share_tgw = true
-  ram_principals = ["111111111111"]
+  amazon_side_asn                        = try(local.local_vars.amazon_side_asn, null)
+  enable_default_route_table_association = try(local.local_vars.enable_default_route_table_association, true)
+  enable_default_route_table_propagation = try(local.local_vars.enable_default_route_table_propagation, true)
+  enable_auto_accept_shared_attachments  = try(local.local_vars.enable_auto_accept_shared_attachments, false)
+  enable_vpn_ecmp_support                = try(local.local_vars.enable_vpn_ecmp_support, true)
+  enable_multicast_support               = try(local.local_vars.enable_multicast_support, false)
+  enable_dns_support                     = try(local.local_vars.enable_dns_support, true)
+  transit_gateway_cidr_blocks            = try(local.local_vars.transit_gateway_cidr_blocks, [])
+  timeouts                               = try(local.local_vars.timeouts, {})
+  create_tgw_routes                      = try(local.local_vars.create_tgw_routes, true)
+
+  share_tgw                     = try(local.local_vars.share_tgw, true)
+  ram_name                      = try(local.local_vars.ram_name, "")
+  ram_allow_external_principals = try(local.local_vars.ram_allow_external_principals, false)
+  ram_principals                = try(local.local_vars.ram_principals, [])
+  ram_resource_share_arn        = try(local.local_vars.ram_resource_share_arn, "")
+
+  flow_logs_type    = try(local.local_vars.flow_logs_type, "REJECT")
+  flowlogs_role_arn = dependency.vpc.outputs.flowlogs_role_arn
+  logs_retention    = try(local.local_vars.logs_retention, 30)
+  log_group_class   = try(local.local_vars.log_group_class, "STANDARD")
+  logs_skip_destroy = try(local.local_vars.logs_skip_destroy, false)
 }
 ```
 
-For detailed variable descriptions, refer to the variables-transit-gw.tf file.
-
 ## Quick Start
 
-1. Add the module to your Terraform configuration:
-   ```hcl
-   module "transit_gateway" {
-     source = "cloudopsworks/terraform-module-aws-transit-gateway"
-     version = "1.0.0"
-
-     org = {
-       organization_name = "MyOrg"
-       organization_unit = "MyUnit"
-       environment_name = "dev"
-       environment_type = "development"
-     }
-
-     name = "quick-start-tgw"
-   }
+1. Create a deployment folder and scaffold the module:
+   ```sh
+   mkdir -p prod/us-east-1/network/transit-gateway
+   cd prod/us-east-1/network/transit-gateway
+   terragrunt scaffold github.com/cloudopsworks/terraform-module-aws-transit-gateway
    ```
 
-2. Initialize Terraform:
-   ```bash
-   terraform init
+2. Edit the generated `inputs.yaml` with the Transit Gateway, RAM sharing, and flow log settings for the deployment.
+
+3. Validate and review:
+   ```sh
+   terragrunt validate
+   terragrunt plan
    ```
 
-3. Review the plan:
-   ```bash
-   terraform plan
+4. Apply:
+   ```sh
+   terragrunt apply
    ```
-
-4. Apply the configuration:
-   ```bash
-   terraform apply
-   ```
-
-5. The Transit Gateway will be created with default settings. Customize the configuration by adding more variables as needed.
 
 
 ## Examples
 
-Terragrunt configuration example:
+Hub deployment `inputs.yaml` example:
 
-```hcl
-# terragrunt.hcl
-include {
-  path = find_in_parent_folders()
-}
+```yaml
+name: "core"
+description: "Core production Transit Gateway"
+amazon_side_asn: "64512"
 
-terraform {
-  source = "git::https://github.com/cloudopsworks/terraform-module-aws-transit-gateway.git?ref=v1.0.0"
-}
+enable_default_route_table_association: true
+enable_default_route_table_propagation: true
+enable_auto_accept_shared_attachments: false
+enable_vpn_ecmp_support: true
+enable_multicast_support: false
+enable_dns_support: true
 
-inputs = {
-  org = {
-    organization_name = "MyOrg"
-    organization_unit = "MyUnit"
-    environment_name = get_env("ENV_NAME", "dev")
-    environment_type = get_env("ENV_TYPE", "development")
-  }
+transit_gateway_cidr_blocks:
+  - "10.255.0.0/24"
+timeouts:
+  create: "20m"
+  update: null
+  delete: "20m"
+create_tgw_routes: true
 
-  name = "central-tgw"
-  description = "Central Transit Gateway for network connectivity"
+share_tgw: true
+ram_name: "prod-core-tgw-share"
+ram_allow_external_principals: false
+ram_principals:
+  - "arn:aws:organizations::123456789012:organization/o-exampleorgid"
+ram_resource_share_arn: ""
 
-  enable_dns_support = true
-  enable_vpn_ecmp_support = true
-
-  transit_gateway_cidr_blocks = ["10.0.0.0/24"]
-
-  share_tgw = true
-  ram_principals = ["222222222222"]
-
-  extra_tags = {
-    Project = "NetworkInfra"
-  }
-}
+flow_logs_type: "ALL"
+flowlogs_role_arn: ""
+logs_retention: 90
+log_group_class: "STANDARD"
+logs_skip_destroy: false
 ```
+
+Spoke deployment notes:
+- Scaffold with `is_hub=false` when prompted.
+- Set `share_tgw=true` and `ram_resource_share_arn` to the RAM share ARN from the hub account when the spoke should accept the shared Transit Gateway.
+- Leave `flowlogs_role_arn` empty when the generated `terragrunt.hcl` uses the default VPC dependency output.
 
 
 
@@ -191,6 +275,7 @@ Available targets:
   help                                Help screen
   help/all                            Display help for all targets
   help/short                          This help short screen
+  init/%                              Initialize the project for a specific cloud provider: %S
   lint                                Lint terraform/opentofu code
   tag                                 Tag the current version
 
@@ -200,13 +285,13 @@ Available targets:
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.81 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.35 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.81 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.42.0 |
 
 ## Modules
 
@@ -234,38 +319,41 @@ Available targets:
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_amazon_side_asn"></a> [amazon\_side\_asn](#input\_amazon\_side\_asn) | The Autonomous System Number (ASN) for the Amazon side of the gateway. By default the TGW is created with the current default Amazon ASN. | `string` | `null` | no |
-| <a name="input_create_tgw_routes"></a> [create\_tgw\_routes](#input\_create\_tgw\_routes) | Controls if TGW Route Table / Routes should be created | `bool` | `true` | no |
-| <a name="input_description"></a> [description](#input\_description) | Description of the EC2 Transit Gateway | `string` | `null` | no |
-| <a name="input_enable_auto_accept_shared_attachments"></a> [enable\_auto\_accept\_shared\_attachments](#input\_enable\_auto\_accept\_shared\_attachments) | Whether resource attachment requests are automatically accepted | `bool` | `false` | no |
+| <a name="input_amazon_side_asn"></a> [amazon\_side\_asn](#input\_amazon\_side\_asn) | Private ASN for the Amazon side of the Transit Gateway BGP session; valid range is 64512-65534 or 4200000000-4294967294 | `string` | `null` | no |
+| <a name="input_create_tgw_routes"></a> [create\_tgw\_routes](#input\_create\_tgw\_routes) | Controls whether a custom Transit Gateway route table is created for hub deployments | `bool` | `true` | no |
+| <a name="input_description"></a> [description](#input\_description) | Description for the EC2 Transit Gateway | `string` | `null` | no |
+| <a name="input_enable_auto_accept_shared_attachments"></a> [enable\_auto\_accept\_shared\_attachments](#input\_enable\_auto\_accept\_shared\_attachments) | Whether cross-account Transit Gateway attachment requests are automatically accepted | `bool` | `false` | no |
 | <a name="input_enable_default_route_table_association"></a> [enable\_default\_route\_table\_association](#input\_enable\_default\_route\_table\_association) | Whether resource attachments are automatically associated with the default association route table | `bool` | `true` | no |
 | <a name="input_enable_default_route_table_propagation"></a> [enable\_default\_route\_table\_propagation](#input\_enable\_default\_route\_table\_propagation) | Whether resource attachments automatically propagate routes to the default propagation route table | `bool` | `true` | no |
-| <a name="input_enable_dns_support"></a> [enable\_dns\_support](#input\_enable\_dns\_support) | Should be true to enable DNS support in the TGW | `bool` | `true` | no |
-| <a name="input_enable_multicast_support"></a> [enable\_multicast\_support](#input\_enable\_multicast\_support) | Whether multicast support is enabled | `bool` | `false` | no |
+| <a name="input_enable_dns_support"></a> [enable\_dns\_support](#input\_enable\_dns\_support) | Whether DNS support is enabled on the Transit Gateway | `bool` | `true` | no |
+| <a name="input_enable_multicast_support"></a> [enable\_multicast\_support](#input\_enable\_multicast\_support) | Whether multicast support is enabled on the Transit Gateway | `bool` | `false` | no |
 | <a name="input_enable_vpn_ecmp_support"></a> [enable\_vpn\_ecmp\_support](#input\_enable\_vpn\_ecmp\_support) | Whether VPN Equal Cost Multipath Protocol support is enabled | `bool` | `true` | no |
-| <a name="input_extra_tags"></a> [extra\_tags](#input\_extra\_tags) | n/a | `map(string)` | `{}` | no |
-| <a name="input_flow_logs_type"></a> [flow\_logs\_type](#input\_flow\_logs\_type) | n/a | `string` | `"REJECT"` | no |
-| <a name="input_flowlogs_role_arn"></a> [flowlogs\_role\_arn](#input\_flowlogs\_role\_arn) | n/a | `string` | n/a | yes |
-| <a name="input_is_hub"></a> [is\_hub](#input\_is\_hub) | Establish this is a HUB or spoke configuration | `bool` | `false` | no |
-| <a name="input_name"></a> [name](#input\_name) | Name to be used on all the resources as identifier | `string` | `""` | no |
-| <a name="input_org"></a> [org](#input\_org) | n/a | <pre>object({<br/>    organization_name = string<br/>    organization_unit = string<br/>    environment_type  = string<br/>    environment_name  = string<br/>  })</pre> | n/a | yes |
-| <a name="input_ram_allow_external_principals"></a> [ram\_allow\_external\_principals](#input\_ram\_allow\_external\_principals) | Indicates whether principals outside your organization can be associated with a resource share. | `bool` | `false` | no |
-| <a name="input_ram_name"></a> [ram\_name](#input\_ram\_name) | The name of the resource share of TGW | `string` | `""` | no |
-| <a name="input_ram_principals"></a> [ram\_principals](#input\_ram\_principals) | A list of principals to share TGW with. Possible values are an AWS account ID, an AWS Organizations Organization ARN, or an AWS Organizations Organization Unit ARN | `list(string)` | `[]` | no |
-| <a name="input_ram_resource_share_arn"></a> [ram\_resource\_share\_arn](#input\_ram\_resource\_share\_arn) | ARN of RAM resource share | `string` | `""` | no |
-| <a name="input_share_tgw"></a> [share\_tgw](#input\_share\_tgw) | Whether to share your transit gateway with other accounts | `bool` | `true` | no |
-| <a name="input_spoke_def"></a> [spoke\_def](#input\_spoke\_def) | n/a | `string` | `"001"` | no |
-| <a name="input_timeouts"></a> [timeouts](#input\_timeouts) | Create, update, and delete timeout configurations for the transit gateway | `map(string)` | `{}` | no |
-| <a name="input_transit_gateway_cidr_blocks"></a> [transit\_gateway\_cidr\_blocks](#input\_transit\_gateway\_cidr\_blocks) | One or more IPv4 or IPv6 CIDR blocks for the transit gateway. Must be a size /24 CIDR block or larger for IPv4, or a size /64 CIDR block or larger for IPv6 | `list(string)` | `[]` | no |
+| <a name="input_extra_tags"></a> [extra\_tags](#input\_extra\_tags) | Extra tags to add to the resources | `map(string)` | `{}` | no |
+| <a name="input_flow_logs_type"></a> [flow\_logs\_type](#input\_flow\_logs\_type) | Traffic type captured by Transit Gateway flow logs; valid values are ACCEPT, REJECT, or ALL | `string` | `"REJECT"` | no |
+| <a name="input_flowlogs_role_arn"></a> [flowlogs\_role\_arn](#input\_flowlogs\_role\_arn) | IAM role ARN that allows VPC Flow Logs to publish Transit Gateway logs to CloudWatch Logs | `string` | n/a | yes |
+| <a name="input_is_hub"></a> [is\_hub](#input\_is\_hub) | Is this a hub or spoke configuration? | `bool` | `false` | no |
+| <a name="input_log_group_class"></a> [log\_group\_class](#input\_log\_group\_class) | CloudWatch Logs log group class; valid values are STANDARD, INFREQUENT\_ACCESS, or DELIVERY | `string` | `"STANDARD"` | no |
+| <a name="input_logs_retention"></a> [logs\_retention](#input\_logs\_retention) | Number of days to retain CloudWatch Logs events; use 0 to never expire events | `number` | `30` | no |
+| <a name="input_logs_skip_destroy"></a> [logs\_skip\_destroy](#input\_logs\_skip\_destroy) | Whether to preserve CloudWatch Log Groups when Terraform destroys this module | `bool` | `false` | no |
+| <a name="input_name"></a> [name](#input\_name) | Short name component to include in Transit Gateway resource names | `string` | `""` | no |
+| <a name="input_org"></a> [org](#input\_org) | Organization details | <pre>object({<br/>    organization_name = string<br/>    organization_unit = string<br/>    environment_type  = string<br/>    environment_name  = string<br/>  })</pre> | n/a | yes |
+| <a name="input_ram_allow_external_principals"></a> [ram\_allow\_external\_principals](#input\_ram\_allow\_external\_principals) | Indicates whether principals outside your AWS Organization can be associated with the RAM resource share | `bool` | `false` | no |
+| <a name="input_ram_name"></a> [ram\_name](#input\_ram\_name) | Name for the RAM resource share; when empty, the generated Transit Gateway name is used | `string` | `""` | no |
+| <a name="input_ram_principals"></a> [ram\_principals](#input\_ram\_principals) | Principals to share the Transit Gateway with; valid values include AWS account IDs, AWS Organization ARNs, or AWS Organizational Unit ARNs | `list(string)` | `[]` | no |
+| <a name="input_ram_resource_share_arn"></a> [ram\_resource\_share\_arn](#input\_ram\_resource\_share\_arn) | RAM resource share ARN to accept when this module is deployed as a spoke | `string` | `""` | no |
+| <a name="input_share_tgw"></a> [share\_tgw](#input\_share\_tgw) | Whether to share the Transit Gateway with other AWS accounts or accept a shared Transit Gateway in spoke deployments | `bool` | `true` | no |
+| <a name="input_spoke_def"></a> [spoke\_def](#input\_spoke\_def) | Spoke ID Number, must be a 3 digit number | `string` | `"001"` | no |
+| <a name="input_timeouts"></a> [timeouts](#input\_timeouts) | Create, update, and delete timeout configurations for the Transit Gateway | `map(string)` | `{}` | no |
+| <a name="input_transit_gateway_cidr_blocks"></a> [transit\_gateway\_cidr\_blocks](#input\_transit\_gateway\_cidr\_blocks) | IPv4 or IPv6 CIDR blocks to associate with the Transit Gateway; IPv4 blocks must be /24 or larger and IPv6 blocks must be /64 or larger | `list(string)` | `[]` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_cloudwatch_log_group_arn"></a> [cloudwatch\_log\_group\_arn](#output\_cloudwatch\_log\_group\_arn) | n/a |
-| <a name="output_cloudwatch_log_group_att_arn"></a> [cloudwatch\_log\_group\_att\_arn](#output\_cloudwatch\_log\_group\_att\_arn) | n/a |
-| <a name="output_cloudwatch_log_group_att_name"></a> [cloudwatch\_log\_group\_att\_name](#output\_cloudwatch\_log\_group\_att\_name) | n/a |
-| <a name="output_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#output\_cloudwatch\_log\_group\_name) | n/a |
+| <a name="output_cloudwatch_log_group_arn"></a> [cloudwatch\_log\_group\_arn](#output\_cloudwatch\_log\_group\_arn) | ARN of the CloudWatch Log Group that stores Transit Gateway flow logs |
+| <a name="output_cloudwatch_log_group_att_arn"></a> [cloudwatch\_log\_group\_att\_arn](#output\_cloudwatch\_log\_group\_att\_arn) | ARN of the CloudWatch Log Group reserved for Transit Gateway attachment flow logs |
+| <a name="output_cloudwatch_log_group_att_name"></a> [cloudwatch\_log\_group\_att\_name](#output\_cloudwatch\_log\_group\_att\_name) | Name of the CloudWatch Log Group reserved for Transit Gateway attachment flow logs |
+| <a name="output_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#output\_cloudwatch\_log\_group\_name) | Name of the CloudWatch Log Group that stores Transit Gateway flow logs |
 | <a name="output_ram_principal_association_ids"></a> [ram\_principal\_association\_ids](#output\_ram\_principal\_association\_ids) | The Amazon Resource Name (ARN) of the Resource Share and the principal, separated by a comma |
 | <a name="output_ram_resource_share_id"></a> [ram\_resource\_share\_id](#output\_ram\_resource\_share\_id) | The Amazon Resource Name (ARN) of the resource share |
 | <a name="output_transit_gateway_arn"></a> [transit\_gateway\_arn](#output\_transit\_gateway\_arn) | EC2 Transit Gateway Amazon Resource Name (ARN) |
@@ -285,10 +373,9 @@ Available targets:
 
 File a GitHub [issue](https://github.com/cloudopsworks/terraform-module-aws-transit-gateway/issues), send us an [email][email] or join our [Slack Community][slack].
 
-[![README Commercial Support][readme_commercial_support_img]][readme_commercial_support_link]
 
 ## DevOps Tools
-
+[]()
 ## Slack Community
 
 
@@ -309,7 +396,7 @@ Please use the [issue tracker](https://github.com/cloudopsworks/terraform-module
 
 ## Copyrights
 
-Copyright © 2024-2025 [Cloud Ops Works LLC](https://cloudops.works)
+Copyright © 2024-2026 [Cloud Ops Works LLC](https://cloudops.works)
 
 
 
@@ -366,32 +453,31 @@ This project is maintained by [Cloud Ops Works LLC][website].
 [![README Footer][readme_footer_img]][readme_footer_link]
 [![Beacon][beacon]][website]
 
-  [logo]: https://cloudops.works/logo-300x69.svg
-  [docs]: https://cowk.io/docs?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=docs
-  [website]: https://cowk.io/homepage?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=website
-  [github]: https://cowk.io/github?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=github
-  [jobs]: https://cowk.io/jobs?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=jobs
-  [hire]: https://cowk.io/hire?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=hire
-  [slack]: https://cowk.io/slack?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=slack
-  [linkedin]: https://cowk.io/linkedin?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=linkedin
-  [twitter]: https://cowk.io/twitter?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=twitter
-  [testimonial]: https://cowk.io/leave-testimonial?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=testimonial
-  [office_hours]: https://cloudops.works/office-hours?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=office_hours
-  [newsletter]: https://cowk.io/newsletter?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=newsletter
-  [email]: https://cowk.io/email?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=email
-  [commercial_support]: https://cowk.io/commercial-support?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=commercial_support
-  [we_love_open_source]: https://cowk.io/we-love-open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=we_love_open_source
-  [terraform_modules]: https://cowk.io/terraform-modules?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=terraform_modules
-  [readme_header_img]: https://cloudops.works/readme/header/img
-  [readme_header_link]: https://cloudops.works/readme/header/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=readme_header_link
-  [readme_footer_img]: https://cloudops.works/readme/footer/img
-  [readme_footer_link]: https://cloudops.works/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=readme_footer_link
-  [readme_commercial_support_img]: https://cloudops.works/readme/commercial-support/img
-  [readme_commercial_support_link]: https://cloudops.works/readme/commercial-support/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=readme_commercial_support_link
-  [share_twitter]: https://twitter.com/intent/tweet/?text=Terraform+Transit+Gateway+Module&url=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
-  [share_linkedin]: https://www.linkedin.com/shareArticle?mini=true&title=Terraform+Transit+Gateway+Module&url=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
+  [logo]: https://cloudopsworks.co/images/main-logo.png
+  [docs]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=docs
+  [website]: https://cloudopsworks.co?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=website
+  [github]: https://cloudopsworks.co/github?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=github
+  [jobs]: https://cloudopsworks.co/jobs?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=jobs
+  [hire]: https://cloudopsworks.co/hire?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=hire
+  [slack]: https://cloudopsworks.co/slack?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=slack
+  [linkedin]: https://cloudopsworks.co/linkedin?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=linkedin
+  [x]: https://cloudopsworks.co/x?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=x
+  [testimonial]: https://cloudopsworks.co/case-studies?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=testimonial
+  [office_hours]: https://cloudopsworks.co/office-hours?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=office_hours
+  [newsletter]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=newsletter
+  [email]: https://cloudopsworks.co/contact?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=email
+  [commercial_support]: https://cloudopsworks.co/services?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=commercial_support
+  [we_love_open_source]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=we_love_open_source
+  [terraform_modules]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=terraform_modules
+  [readme_header_img]: https://cloudopsworks.co/images/readme-header.png
+  [readme_header_link]: https://cloudopsworks.co/readme/header/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=readme_header_link
+  [readme_footer_img]: https://cloudopsworks.co/images/main-logo-footer.png
+  [readme_footer_link]: https://cloudopsworks.co/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=readme_footer_link
+  [readme_commercial_support_img]: https://cloudopsworks.co/readme/commercial-support/img
+  [readme_commercial_support_link]: https://cloudopsworks.co/readme/commercial-support/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-transit-gateway&utm_content=readme_commercial_support_link
+  [share_twitter]: https://x.com/intent/tweet/?text=Terraform+AWS+Transit+Gateway+Module&url=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
+  [share_linkedin]: https://www.linkedin.com/shareArticle?mini=true&title=Terraform+AWS+Transit+Gateway+Module&url=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
   [share_reddit]: https://reddit.com/submit/?url=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
   [share_facebook]: https://facebook.com/sharer/sharer.php?u=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
-  [share_googleplus]: https://plus.google.com/share?url=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
-  [share_email]: mailto:?subject=Terraform+Transit+Gateway+Module&body=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
-  [beacon]: https://ga-beacon.cloudops.works/G-7XWMFVFXZT/cloudopsworks/terraform-module-aws-transit-gateway?pixel&cs=github&cm=readme&an=terraform-module-aws-transit-gateway
+  [share_email]: mailto:?subject=Terraform+AWS+Transit+Gateway+Module&body=https://github.com/cloudopsworks/terraform-module-aws-transit-gateway
+  [beacon]: https://ga-beacon.cloudospworks.co/G-QMZVYYN2VN/cloudopsworks/terraform-module-aws-transit-gateway?pixel&cs=github&cm=readme&an=terraform-module-aws-transit-gateway
