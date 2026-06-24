@@ -97,12 +97,13 @@ name: "" # (Optional) Short name component to include in Transit Gateway resourc
 description: null # (Optional) Description for the EC2 Transit Gateway. Default: null (uses the generated Transit Gateway name).
 amazon_side_asn: null # (Optional) Private ASN for the Amazon side of the Transit Gateway BGP session. Default: null (AWS default ASN). Valid range: 64512-65534 or 4200000000-4294967294.
 
-enable_default_route_table_association: true # (Optional) Automatically associate attachments with the default association route table. Default: true.
-enable_default_route_table_propagation: true # (Optional) Automatically propagate attachment routes to the default propagation route table. Default: true.
-enable_auto_accept_shared_attachments: false # (Optional) Automatically accept cross-account attachment requests. Default: false.
-enable_vpn_ecmp_support: true # (Optional) Enable VPN Equal Cost Multipath routing support. Default: true.
-enable_multicast_support: false # (Optional) Enable multicast support on the Transit Gateway. Default: false.
-enable_dns_support: true # (Optional) Enable DNS support on the Transit Gateway. Default: true.
+# enable_* variables — stored without the "enable_" prefix; terragrunt maps these to enable_<name>
+default_route_table_association: true # (Optional) Automatically associate attachments with the default association route table. Default: true. Maps to enable_default_route_table_association.
+default_route_table_propagation: true # (Optional) Automatically propagate attachment routes to the default propagation route table. Default: true. Maps to enable_default_route_table_propagation.
+auto_accept_shared_attachments: false # (Optional) Automatically accept cross-account attachment requests. Default: false. Maps to enable_auto_accept_shared_attachments.
+vpn_ecmp_support: true # (Optional) Enable VPN Equal Cost Multipath routing support. Default: true. Maps to enable_vpn_ecmp_support.
+multicast_support: false # (Optional) Enable multicast support on the Transit Gateway. Default: false. Maps to enable_multicast_support.
+dns_support: true # (Optional) Enable DNS support on the Transit Gateway. Default: true. Maps to enable_dns_support.
 
 transit_gateway_cidr_blocks: [] # (Optional) IPv4 or IPv6 CIDR blocks to associate with the Transit Gateway. Default: []. IPv4 blocks must be /24 or larger; IPv6 blocks must be /64 or larger.
 timeouts: # (Optional) Operation timeout overrides for the Transit Gateway. Default: {}.
@@ -112,10 +113,13 @@ timeouts: # (Optional) Operation timeout overrides for the Transit Gateway. Defa
 create_tgw_routes: true # (Optional) Create a custom Transit Gateway route table in hub deployments. Default: true.
 
 share_tgw: true # (Optional) Share the Transit Gateway through AWS Resource Access Manager (RAM). Default: true.
-ram_name: "" # (Optional) Name for the RAM resource share. Default: "" (uses the generated Transit Gateway name).
-ram_allow_external_principals: false # (Optional) Allow principals outside the AWS Organization to be associated with the RAM resource share. Default: false.
-ram_principals: [] # (Optional) Principals to share the Transit Gateway with. Default: []. Valid values include AWS account IDs, AWS Organization ARNs, or AWS Organizational Unit ARNs.
-ram_resource_share_arn: "" # (Optional) RAM resource share ARN to accept when this module is deployed as a spoke. Default: "".
+
+# ram_* variables — stored under the "ram:" nested object without the "ram_" prefix; terragrunt maps these to ram_<name>
+ram:
+  name: "" # (Optional) Name for the RAM resource share. Default: "" (uses the generated Transit Gateway name). Maps to ram_name.
+  allow_external_principals: false # (Optional) Allow principals outside the AWS Organization to be associated with the RAM resource share. Default: false. Maps to ram_allow_external_principals.
+  principals: [] # (Optional) Principals to share the Transit Gateway with. Default: []. Valid values include AWS account IDs, AWS Organization ARNs, or AWS Organizational Unit ARNs. Maps to ram_principals.
+  resource_share_arn: "" # (Optional) RAM resource share ARN to accept when this module is deployed as a spoke. Default: "". Maps to ram_resource_share_arn.
 
 flow_logs_type: "REJECT" # (Optional) Traffic type captured by Transit Gateway flow logs. Default: "REJECT". Valid values: "ACCEPT", "REJECT", "ALL".
 flowlogs_role_arn: "" # (Required when vpc_enabled is false or no VPC dependency is available) IAM role ARN that allows VPC Flow Logs to publish Transit Gateway logs to CloudWatch Logs.
@@ -172,31 +176,32 @@ inputs = {
   spoke_def  = local.spoke_vars.spoke
   extra_tags = local.tags
 
-  name        = try(local.local_vars.name, "")
-  description = try(local.local_vars.description, null)
-
-  amazon_side_asn                        = try(local.local_vars.amazon_side_asn, null)
-  enable_default_route_table_association = try(local.local_vars.enable_default_route_table_association, true)
-  enable_default_route_table_propagation = try(local.local_vars.enable_default_route_table_propagation, true)
-  enable_auto_accept_shared_attachments  = try(local.local_vars.enable_auto_accept_shared_attachments, false)
-  enable_vpn_ecmp_support                = try(local.local_vars.enable_vpn_ecmp_support, true)
-  enable_multicast_support               = try(local.local_vars.enable_multicast_support, false)
-  enable_dns_support                     = try(local.local_vars.enable_dns_support, true)
-  transit_gateway_cidr_blocks            = try(local.local_vars.transit_gateway_cidr_blocks, [])
-  timeouts                               = try(local.local_vars.timeouts, {})
-  create_tgw_routes                      = try(local.local_vars.create_tgw_routes, true)
-
-  share_tgw                     = try(local.local_vars.share_tgw, true)
-  ram_name                      = try(local.local_vars.ram_name, "")
-  ram_allow_external_principals = try(local.local_vars.ram_allow_external_principals, false)
-  ram_principals                = try(local.local_vars.ram_principals, [])
-  ram_resource_share_arn        = try(local.local_vars.ram_resource_share_arn, "")
-
-  flow_logs_type    = try(local.local_vars.flow_logs_type, "REJECT")
   flowlogs_role_arn = dependency.vpc.outputs.flowlogs_role_arn
-  logs_retention    = try(local.local_vars.logs_retention, 30)
-  log_group_class   = try(local.local_vars.log_group_class, "STANDARD")
-  logs_skip_destroy = try(local.local_vars.logs_skip_destroy, false)
+
+  name            = local.local_vars.name
+  description     = local.local_vars.description
+  amazon_side_asn = local.local_vars.amazon_side_asn
+
+  enable_default_route_table_association = try(local.local_vars.default_route_table_association, true)
+  enable_default_route_table_propagation = try(local.local_vars.default_route_table_propagation, true)
+  enable_auto_accept_shared_attachments  = try(local.local_vars.auto_accept_shared_attachments, false)
+  enable_vpn_ecmp_support                = try(local.local_vars.vpn_ecmp_support, true)
+  enable_multicast_support               = try(local.local_vars.multicast_support, false)
+  enable_dns_support                     = try(local.local_vars.dns_support, true)
+  transit_gateway_cidr_blocks            = local.local_vars.transit_gateway_cidr_blocks
+  timeouts                               = local.local_vars.timeouts
+  create_tgw_routes                      = local.local_vars.create_tgw_routes
+
+  share_tgw                     = local.local_vars.share_tgw
+  ram_name                      = try(local.local_vars.ram.name, "")
+  ram_allow_external_principals = try(local.local_vars.ram.allow_external_principals, false)
+  ram_principals                = try(local.local_vars.ram.principals, [])
+  ram_resource_share_arn        = try(local.local_vars.ram.resource_share_arn, "")
+
+  flow_logs_type    = local.local_vars.flow_logs_type
+  logs_retention    = local.local_vars.logs_retention
+  log_group_class   = local.local_vars.log_group_class
+  logs_skip_destroy = local.local_vars.logs_skip_destroy
 }
 ```
 
@@ -232,12 +237,12 @@ name: "core"
 description: "Core production Transit Gateway"
 amazon_side_asn: "64512"
 
-enable_default_route_table_association: true
-enable_default_route_table_propagation: true
-enable_auto_accept_shared_attachments: false
-enable_vpn_ecmp_support: true
-enable_multicast_support: false
-enable_dns_support: true
+default_route_table_association: true
+default_route_table_propagation: true
+auto_accept_shared_attachments: false
+vpn_ecmp_support: true
+multicast_support: false
+dns_support: true
 
 transit_gateway_cidr_blocks:
   - "10.255.0.0/24"
@@ -248,11 +253,12 @@ timeouts:
 create_tgw_routes: true
 
 share_tgw: true
-ram_name: "prod-core-tgw-share"
-ram_allow_external_principals: false
-ram_principals:
-  - "arn:aws:organizations::123456789012:organization/o-exampleorgid"
-ram_resource_share_arn: ""
+ram:
+  name: "prod-core-tgw-share"
+  allow_external_principals: false
+  principals:
+    - "arn:aws:organizations::123456789012:organization/o-exampleorgid"
+  resource_share_arn: ""
 
 flow_logs_type: "ALL"
 flowlogs_role_arn: ""
@@ -291,7 +297,7 @@ Available targets:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.35 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.42.0 |
 
 ## Modules
 

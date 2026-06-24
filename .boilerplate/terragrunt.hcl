@@ -58,6 +58,8 @@ inputs = {
   {{ .Name }} = try(local.local_vars.{{ .Name | replace "enable_" "" }}, {{ .DefaultValue }})
   {{- else if hasPrefix "ram_" .Name }}
   {{ .Name }} = try(local.local_vars.{{ .Name | replace "ram_" "ram." }}, {{ .DefaultValue }})
+  {{- else }}
+  {{ .Name }} = local.local_vars.{{ .Name }}
   {{- end }}
   {{- end }}
   {{- end }}
